@@ -1,0 +1,7 @@
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+pydantic==2.11.7
+cachetools==5.5.2
+slowapi==0.1.9
+orjson==3.10.18
+pydantic-settings==2.10.1
