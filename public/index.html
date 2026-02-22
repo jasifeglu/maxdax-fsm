@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>MXD Ticket Management</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f7f8fa; }
+    .card { background: #fff; padding: 16px; border-radius: 8px; margin-bottom: 16px; }
+    form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .full { grid-column: 1 / -1; }
+    input, select, textarea, button { padding: 8px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border-bottom: 1px solid #ddd; padding: 8px; font-size: 13px; text-align: left; }
+  </style>
+</head>
+<body>
+  <h1>Ticket Management</h1>
+  <p>Workflow: New → Assigned → Scheduled → On Site → Working → Pending → Completed → Closed</p>
+
+  <div class="card">
+    <h3>Create Ticket</h3>
+    <form id="ticketForm">
+      <input name="customerName" required placeholder="Customer name" />
+      <input name="mobileNumber" required placeholder="Mobile number" />
+      <input name="address" placeholder="Address" />
+      <input name="googleMapLink" placeholder="Google map link" />
+      <select name="priority" required>
+        <option value="">Priority</option>
+        <option>Low</option><option>Medium</option><option>High</option><option>Urgent</option>
+      </select>
+      <input value="New" readonly />
+      <textarea name="complaintDescription" class="full" required placeholder="Complaint description"></textarea>
+      <button class="full" type="submit">Create</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>Tickets</h3>
+    <table>
+      <thead>
+        <tr><th>Ticket</th><th>Customer</th><th>Mobile</th><th>Priority</th><th>Status</th><th>Action</th></tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+<script>
+async function loadTickets() {
+  const res = await fetch('/api/tickets');
+  const tickets = await res.json();
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  tickets.forEach(t => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${t.ticketNo}</td><td>${t.customer.name}</td><td>${t.customer.mobileNumber}</td><td>${t.priority}</td><td>${t.status}</td><td>${t.nextStatus ? `<button data-id='${t.id}' data-next='${t.nextStatus}'>${t.nextStatus}</button>` : '-'}</td>`;
+    tbody.appendChild(tr);
+  });
+  tbody.querySelectorAll('button').forEach(btn => {
+    btn.onclick = async () => {
+      await fetch(`/api/tickets/${btn.dataset.id}/status`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({status: btn.dataset.next})});
+      loadTickets();
+    }
+  })
+}
+
+document.getElementById('ticketForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target).entries());
+  data.status = 'New';
+  const res = await fetch('/api/tickets', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data)});
+  if (!res.ok) alert('Failed to create ticket');
+  e.target.reset();
+  loadTickets();
+};
+
+loadTickets();
+</script>
+</body>
+</html>
