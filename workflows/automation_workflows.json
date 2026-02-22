@@ -1,0 +1,319 @@
+{
+  "version": "1.0",
+  "workflows": [
+    {
+      "name": "sla_timer_alerts",
+      "description": "Tracks open tickets against SLA checkpoints and sends staged alerts before and after breach.",
+      "trigger": {
+        "type": "ticket_created",
+        "filters": {
+          "status": ["new", "in_progress"],
+          "priority": ["p1", "p2", "p3"]
+        }
+      },
+      "states": [
+        {
+          "id": "monitoring",
+          "on_enter": [
+            {
+              "action": "schedule_timer",
+              "params": {
+                "timers": [
+                  { "name": "t_minus_30m", "offset": "sla_deadline-30m" },
+                  { "name": "t_minus_10m", "offset": "sla_deadline-10m" },
+                  { "name": "t_breach", "offset": "sla_deadline" }
+                ]
+              }
+            }
+          ],
+          "transitions": [
+            {
+              "event": "timer_fired:t_minus_30m",
+              "target": "warn_30m"
+            },
+            {
+              "event": "timer_fired:t_minus_10m",
+              "target": "warn_10m"
+            },
+            {
+              "event": "timer_fired:t_breach",
+              "target": "breached"
+            },
+            {
+              "event": "ticket_resolved",
+              "target": "completed"
+            }
+          ]
+        },
+        {
+          "id": "warn_30m",
+          "on_enter": [
+            {
+              "action": "send_alert",
+              "params": {
+                "channel": "slack",
+                "template": "sla_warning_30m",
+                "recipients": ["assignee", "team_lead"]
+              }
+            }
+          ],
+          "transitions": [
+            { "event": "ticket_resolved", "target": "completed" },
+            { "event": "timer_fired:t_minus_10m", "target": "warn_10m" },
+            { "event": "timer_fired:t_breach", "target": "breached" }
+          ]
+        },
+        {
+          "id": "warn_10m",
+          "on_enter": [
+            {
+              "action": "send_alert",
+              "params": {
+                "channel": "email",
+                "template": "sla_warning_10m",
+                "recipients": ["assignee", "team_lead", "support_manager"]
+              }
+            }
+          ],
+          "transitions": [
+            { "event": "ticket_resolved", "target": "completed" },
+            { "event": "timer_fired:t_breach", "target": "breached" }
+          ]
+        },
+        {
+          "id": "breached",
+          "on_enter": [
+            {
+              "action": "send_alert",
+              "params": {
+                "channel": "pagerduty",
+                "template": "sla_breach",
+                "recipients": ["on_call_manager"]
+              }
+            }
+          ],
+          "transitions": [
+            { "event": "ticket_resolved", "target": "completed" }
+          ]
+        },
+        {
+          "id": "completed",
+          "type": "final"
+        }
+      ]
+    },
+    {
+      "name": "ticket_escalation",
+      "description": "Escalates stale or repeatedly reopened tickets through tiered ownership.",
+      "trigger": {
+        "type": "ticket_updated",
+        "filters": {
+          "status": ["open", "in_progress"],
+          "age_hours_gte": 24
+        }
+      },
+      "states": [
+        {
+          "id": "triage",
+          "transitions": [
+            {
+              "event": "condition:age_hours>=24 && priority in [p2,p3]",
+              "target": "escalate_l1"
+            },
+            {
+              "event": "condition:age_hours>=8 && priority==p1",
+              "target": "escalate_l2"
+            },
+            {
+              "event": "condition:reopen_count>=3",
+              "target": "escalate_l2"
+            },
+            {
+              "event": "ticket_resolved",
+              "target": "done"
+            }
+          ]
+        },
+        {
+          "id": "escalate_l1",
+          "on_enter": [
+            {
+              "action": "reassign_ticket",
+              "params": {
+                "assignee_group": "senior_support"
+              }
+            },
+            {
+              "action": "add_comment",
+              "params": {
+                "template": "escalation_level_1"
+              }
+            }
+          ],
+          "transitions": [
+            { "event": "condition:age_hours>=48", "target": "escalate_l2" },
+            { "event": "ticket_resolved", "target": "done" }
+          ]
+        },
+        {
+          "id": "escalate_l2",
+          "on_enter": [
+            {
+              "action": "reassign_ticket",
+              "params": {
+                "assignee_group": "engineering_support"
+              }
+            },
+            {
+              "action": "notify",
+              "params": {
+                "channel": "email",
+                "recipients": ["support_director"],
+                "template": "escalation_level_2"
+              }
+            }
+          ],
+          "transitions": [
+            { "event": "condition:age_hours>=72", "target": "escalate_exec" },
+            { "event": "ticket_resolved", "target": "done" }
+          ]
+        },
+        {
+          "id": "escalate_exec",
+          "on_enter": [
+            {
+              "action": "notify",
+              "params": {
+                "channel": "slack",
+                "recipients": ["vp_support", "ops_head"],
+                "template": "executive_escalation"
+              }
+            }
+          ],
+          "transitions": [
+            { "event": "ticket_resolved", "target": "done" }
+          ]
+        },
+        {
+          "id": "done",
+          "type": "final"
+        }
+      ]
+    },
+    {
+      "name": "amc_reminder_scheduling",
+      "description": "Schedules reminder notifications ahead of annual maintenance contract expiry.",
+      "trigger": {
+        "type": "contract_near_expiry",
+        "filters": {
+          "contract_type": ["amc"],
+          "is_active": true
+        }
+      },
+      "states": [
+        {
+          "id": "scheduled",
+          "on_enter": [
+            {
+              "action": "schedule_timer",
+              "params": {
+                "timers": [
+                  { "name": "remind_60d", "offset": "expiry_date-60d" },
+                  { "name": "remind_30d", "offset": "expiry_date-30d" },
+                  { "name": "remind_7d", "offset": "expiry_date-7d" },
+                  { "name": "day_of_expiry", "offset": "expiry_date" }
+                ]
+              }
+            }
+          ],
+          "transitions": [
+            { "event": "timer_fired:remind_60d", "target": "notify_60d" },
+            { "event": "timer_fired:remind_30d", "target": "notify_30d" },
+            { "event": "timer_fired:remind_7d", "target": "notify_7d" },
+            { "event": "timer_fired:day_of_expiry", "target": "notify_expiry" },
+            { "event": "contract_renewed", "target": "renewed" }
+          ]
+        },
+        {
+          "id": "notify_60d",
+          "on_enter": [
+            {
+              "action": "send_reminder",
+              "params": {
+                "template": "amc_renewal_60d",
+                "recipients": ["account_owner", "customer_primary_contact"]
+              }
+            }
+          ],
+          "transitions": [
+            { "event": "contract_renewed", "target": "renewed" },
+            { "event": "timer_fired:remind_30d", "target": "notify_30d" }
+          ]
+        },
+        {
+          "id": "notify_30d",
+          "on_enter": [
+            {
+              "action": "send_reminder",
+              "params": {
+                "template": "amc_renewal_30d",
+                "recipients": ["account_owner", "customer_primary_contact", "sales_owner"]
+              }
+            }
+          ],
+          "transitions": [
+            { "event": "contract_renewed", "target": "renewed" },
+            { "event": "timer_fired:remind_7d", "target": "notify_7d" }
+          ]
+        },
+        {
+          "id": "notify_7d",
+          "on_enter": [
+            {
+              "action": "send_reminder",
+              "params": {
+                "template": "amc_renewal_7d",
+                "recipients": ["account_owner", "customer_primary_contact", "sales_owner", "finance_contact"]
+              }
+            }
+          ],
+          "transitions": [
+            { "event": "contract_renewed", "target": "renewed" },
+            { "event": "timer_fired:day_of_expiry", "target": "notify_expiry" }
+          ]
+        },
+        {
+          "id": "notify_expiry",
+          "on_enter": [
+            {
+              "action": "send_reminder",
+              "params": {
+                "template": "amc_expiry_day",
+                "recipients": ["account_owner", "customer_primary_contact", "sales_owner", "finance_contact"]
+              }
+            },
+            {
+              "action": "create_followup_task",
+              "params": {
+                "due_in_days": 2,
+                "owner": "account_owner"
+              }
+            }
+          ],
+          "transitions": [
+            { "event": "contract_renewed", "target": "renewed" },
+            { "event": "condition:days_since_expiry>=5", "target": "expired_unrenewed" }
+          ]
+        },
+        {
+          "id": "renewed",
+          "type": "final"
+        },
+        {
+          "id": "expired_unrenewed",
+          "type": "final"
+        }
+      ]
+    }
+  ]
+}
