@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scheduling Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="dashboard">
+    <header>
+      <h1>Scheduling Dashboard</h1>
+      <p>Manage field jobs and technician availability in one place.</p>
+    </header>
+
+    <section class="panel" aria-labelledby="tech-heading">
+      <div class="panel-title-row">
+        <h2 id="tech-heading">Technician Availability</h2>
+      </div>
+      <div id="technicians" class="tech-grid"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="jobs-heading">
+      <h2 id="jobs-heading">Jobs</h2>
+      <div id="jobs" class="jobs-list"></div>
+    </section>
+
+    <section class="panel" aria-labelledby="calendar-heading">
+      <div class="panel-title-row">
+        <h2 id="calendar-heading">Calendar Job View</h2>
+        <div class="month-controls">
+          <button id="prevMonth" aria-label="Previous month">◀</button>
+          <strong id="monthLabel"></strong>
+          <button id="nextMonth" aria-label="Next month">▶</button>
+        </div>
+      </div>
+      <div id="calendar" class="calendar"></div>
+    </section>
+  </main>
+
+  <template id="jobTemplate">
+    <article class="job-card">
+      <div>
+        <h3 class="job-title"></h3>
+        <p class="job-date"></p>
+      </div>
+      <label>
+        Assign technician
+        <select class="job-tech-select"></select>
+      </label>
+    </article>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
