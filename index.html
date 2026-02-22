@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Technician Management System</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Technician Management System</h1>
+      <p>Manage technicians, skills, credentials, and assigned jobs.</p>
+    </header>
+
+    <main class="layout">
+      <section class="panel" id="admin-panel">
+        <h2>Admin Console</h2>
+
+        <form id="technician-form" class="card">
+          <h3>Add Technician</h3>
+          <label>
+            Full name
+            <input type="text" id="tech-name" placeholder="e.g. Alex Carter" required />
+          </label>
+          <label>
+            Status
+            <select id="tech-status">
+              <option value="Available">Available</option>
+              <option value="On Job">On Job</option>
+              <option value="Off Duty">Off Duty</option>
+            </select>
+          </label>
+          <button type="submit">Add Technician</button>
+          <p class="muted">Login credentials are auto generated.</p>
+        </form>
+
+        <form id="skills-form" class="card">
+          <h3>Assign Skills</h3>
+          <label>
+            Technician
+            <select id="skill-tech"></select>
+          </label>
+          <label>
+            Skill
+            <input type="text" id="skill-name" placeholder="e.g. HVAC Repair" required />
+          </label>
+          <button type="submit">Assign Skill</button>
+        </form>
+
+        <form id="job-form" class="card">
+          <h3>Assign Job</h3>
+          <label>
+            Technician
+            <select id="job-tech"></select>
+          </label>
+          <label>
+            Job title
+            <input type="text" id="job-title" placeholder="e.g. Inspect rooftop unit" required />
+          </label>
+          <label>
+            Job details
+            <textarea id="job-details" rows="3" placeholder="Describe scope, location, timeline..." required></textarea>
+          </label>
+          <button type="submit">Assign Job</button>
+        </form>
+
+        <section class="card">
+          <h3>Technician Status</h3>
+          <div id="status-list" class="list"></div>
+        </section>
+      </section>
+
+      <section class="panel" id="technician-panel">
+        <h2>Technician Dashboard</h2>
+
+        <div class="card">
+          <label>
+            Select technician
+            <select id="dashboard-tech"></select>
+          </label>
+          <div id="dashboard-credentials" class="credentials"></div>
+        </div>
+
+        <section class="card">
+          <h3>Assigned Jobs</h3>
+          <ul id="assigned-jobs" class="list"></ul>
+        </section>
+
+        <section class="card">
+          <h3>Job Details</h3>
+          <div id="job-details-view" class="details muted">Select a job to see details.</div>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
