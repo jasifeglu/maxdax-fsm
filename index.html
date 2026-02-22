@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Technician Billing Module</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <main class="container">
+      <h1>Technician Billing Module</h1>
+
+      <section class="card">
+        <div class="section-title-row">
+          <h2>Invoice Items</h2>
+          <button id="add-item-btn" type="button" class="primary">+ Add Item</button>
+        </div>
+
+        <div id="items-list" class="items-list"></div>
+
+        <div class="summary-grid">
+          <label for="service-charge">Service Charge (₹)</label>
+          <input id="service-charge" type="number" min="0" step="0.01" value="0" />
+
+          <label for="discount">Discount (₹)</label>
+          <input id="discount" type="number" min="0" step="0.01" value="0" />
+
+          <label for="payment-status">Payment Status</label>
+          <select id="payment-status">
+            <option value="Paid">Paid</option>
+            <option value="Pending" selected>Pending</option>
+          </select>
+        </div>
+
+        <div class="totals">
+          <p>Subtotal: <strong id="subtotal">₹0.00</strong></p>
+          <p>Grand Total: <strong id="grand-total">₹0.00</strong></p>
+        </div>
+
+        <div class="actions">
+          <button id="generate-pdf-btn" type="button" class="secondary">Generate Invoice PDF</button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
