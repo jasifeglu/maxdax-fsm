@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Technician Check-In / Check-Out</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --accent: #0f62fe;
+      --accent-soft: #dbe8ff;
+      --text: #21272a;
+      --muted: #6f6f6f;
+      --success: #198038;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 980px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .panel {
+      background: var(--panel);
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      padding: 1rem;
+    }
+
+    h1, h2 {
+      margin-top: 0;
+    }
+
+    .row {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    input, button {
+      border-radius: 6px;
+      border: 1px solid #c6c6c6;
+      padding: 0.6rem 0.75rem;
+      font-size: 1rem;
+    }
+
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button[disabled] {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .secondary {
+      background: #525252;
+    }
+
+    .status {
+      margin-top: 0.75rem;
+      color: var(--muted);
+    }
+
+    .status.success {
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.75rem;
+    }
+
+    th, td {
+      padding: 0.5rem;
+      border-bottom: 1px solid #e0e0e0;
+      text-align: left;
+      font-size: 0.92rem;
+    }
+
+    th {
+      background: var(--accent-soft);
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="panel">
+      <h1>Technician Attendance</h1>
+      <div class="row">
+        <label for="techName">Technician Name</label>
+        <input id="techName" type="text" placeholder="Enter your name" />
+      </div>
+      <div class="row" style="margin-top: 0.75rem;">
+        <button id="checkInBtn">Check-In</button>
+        <button id="checkOutBtn" class="secondary" disabled>Check-Out</button>
+      </div>
+      <p id="status" class="status">Ready.</p>
+    </section>
+
+    <section class="panel">
+      <div class="row" style="justify-content: space-between;">
+        <h2 style="margin: 0;">Admin Panel</h2>
+        <button id="toggleAdmin" class="secondary">Show Logs</button>
+      </div>
+      <div id="adminLogs" class="hidden">
+        <table>
+          <thead>
+            <tr>
+              <th>Technician</th>
+              <th>Check-In Time</th>
+              <th>Check-In GPS</th>
+              <th>Check-Out Time</th>
+              <th>Check-Out GPS</th>
+            </tr>
+          </thead>
+          <tbody id="logTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'tech_check_in_out_logs';
+    const techNameInput = document.getElementById('techName');
+    const checkInBtn = document.getElementById('checkInBtn');
+    const checkOutBtn = document.getElementById('checkOutBtn');
+    const statusEl = document.getElementById('status');
+    const logTableBody = document.getElementById('logTableBody');
+    const adminLogs = document.getElementById('adminLogs');
+    const toggleAdmin = document.getElementById('toggleAdmin');
+
+    let activeSessionId = null;
+
+    const getLogs = () => JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    const saveLogs = (logs) => localStorage.setItem(STORAGE_KEY, JSON.stringify(logs));
+
+    const formatTimestamp = (isoTime) => {
+      if (!isoTime) return '-';
+      return new Date(isoTime).toLocaleString();
+    };
+
+    const formatCoords = (coords) => {
+      if (!coords) return 'Unavailable';
+      return `${coords.latitude.toFixed(6)}, ${coords.longitude.toFixed(6)}`;
+    };
+
+    const getCoordinates = () => {
+      return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+          resolve(null);
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            resolve({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            });
+          },
+          () => resolve(null),
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+      });
+    };
+
+    const renderLogs = () => {
+      const logs = getLogs();
+      logTableBody.innerHTML = '';
+
+      logs.forEach((log) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${log.techName}</td>
+          <td>${formatTimestamp(log.checkInTime)}</td>
+          <td>${formatCoords(log.checkInCoords)}</td>
+          <td>${formatTimestamp(log.checkOutTime)}</td>
+          <td>${formatCoords(log.checkOutCoords)}</td>
+        `;
+        logTableBody.appendChild(row);
+      });
+    };
+
+    const setStatus = (text, success = false) => {
+      statusEl.textContent = text;
+      statusEl.classList.toggle('success', success);
+    };
+
+    checkInBtn.addEventListener('click', async () => {
+      const techName = techNameInput.value.trim();
+      if (!techName) {
+        setStatus('Please enter technician name before check-in.');
+        return;
+      }
+
+      const coords = await getCoordinates();
+      const logs = getLogs();
+      const sessionId = crypto.randomUUID();
+
+      logs.push({
+        id: sessionId,
+        techName,
+        checkInTime: new Date().toISOString(),
+        checkInCoords: coords,
+        checkOutTime: null,
+        checkOutCoords: null
+      });
+
+      saveLogs(logs);
+      activeSessionId = sessionId;
+      checkInBtn.disabled = true;
+      checkOutBtn.disabled = false;
+      setStatus('Checked in successfully. Work session started.', true);
+      renderLogs();
+    });
+
+    checkOutBtn.addEventListener('click', async () => {
+      if (!activeSessionId) {
+        setStatus('Technician must check-in before check-out.');
+        return;
+      }
+
+      const coords = await getCoordinates();
+      const logs = getLogs();
+      const record = logs.find((log) => log.id === activeSessionId);
+
+      if (!record) {
+        setStatus('Unable to find active check-in record.');
+        return;
+      }
+
+      record.checkOutTime = new Date().toISOString();
+      record.checkOutCoords = coords;
+      saveLogs(logs);
+
+      activeSessionId = null;
+      checkInBtn.disabled = false;
+      checkOutBtn.disabled = true;
+      setStatus('Checked out successfully. Session complete.', true);
+      renderLogs();
+    });
+
+    toggleAdmin.addEventListener('click', () => {
+      adminLogs.classList.toggle('hidden');
+      toggleAdmin.textContent = adminLogs.classList.contains('hidden') ? 'Show Logs' : 'Hide Logs';
+    });
+
+    renderLogs();
+  </script>
+</body>
+</html>
