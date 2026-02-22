@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reporting Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="kicker">Service Operations</p>
+        <h1>Reporting Dashboard</h1>
+      </div>
+      <button class="export-btn">Export Reports</button>
+    </header>
+
+    <main class="grid">
+      <section class="card" id="revenue-card">
+        <div class="card-head">
+          <h2>Amount-wise Revenue</h2>
+          <p>Total: <strong id="total-revenue">$0</strong></p>
+        </div>
+        <div id="revenue-chart" class="bar-chart" aria-label="Monthly revenue chart"></div>
+      </section>
+
+      <section class="card" id="tech-card">
+        <div class="card-head">
+          <h2>Technician Performance</h2>
+          <p>Completion, resolution time & satisfaction</p>
+        </div>
+        <div id="tech-table" class="tech-table"></div>
+      </section>
+
+      <section class="card" id="payments-card">
+        <div class="card-head">
+          <h2>Pending Payments</h2>
+          <p>Outstanding by aging bucket</p>
+        </div>
+        <div class="payments-layout">
+          <div id="payment-ring" class="payment-ring" role="img" aria-label="Pending payment distribution"></div>
+          <ul id="payment-list" class="legend-list"></ul>
+        </div>
+      </section>
+
+      <section class="card" id="ticket-card">
+        <div class="card-head">
+          <h2>Ticket Status Analytics</h2>
+          <p>Current pipeline and week-over-week trend</p>
+        </div>
+        <div id="ticket-status" class="status-grid"></div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
