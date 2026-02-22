@@ -1,0 +1,25 @@
+name: maxdax_fsm
+
+description: Technician field service app with background GPS tracking and admin live map.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cloud_firestore: ^5.5.0
+  firebase_core: ^3.8.0
+  geolocator: ^13.0.1
+  flutter_background_service: ^5.0.10
+  google_maps_flutter: ^2.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
