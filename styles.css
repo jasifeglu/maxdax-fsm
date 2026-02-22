@@ -1,0 +1,124 @@
+:root {
+  color-scheme: light;
+  --bg: #f6f8fc;
+  --panel: #ffffff;
+  --line: #d8dfeb;
+  --text: #1d2a43;
+  --muted: #5f6f8f;
+  --available: #2e9f4d;
+  --installation: #f29e1f;
+  --offline: #d64747;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+.dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  display: grid;
+  gap: 1rem;
+}
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1rem;
+}
+header h1 { margin-bottom: .25rem; }
+header p { color: var(--muted); margin-top: 0; }
+.panel-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+.tech-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: .75rem;
+}
+.tech-card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: .75rem;
+  display: grid;
+  gap: .5rem;
+}
+.tech-card h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+.status-badge {
+  justify-self: start;
+  font-size: .78rem;
+  font-weight: 700;
+  border-radius: 100px;
+  padding: .2rem .55rem;
+  color: #fff;
+}
+.status-available { background: var(--available); }
+.status-installation { background: var(--installation); }
+.status-offline { background: var(--offline); }
+
+.jobs-list {
+  display: grid;
+  gap: .75rem;
+}
+.job-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: .75rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: .75rem;
+}
+.job-title { margin: 0; font-size: 1rem; }
+.job-date { margin: .2rem 0 0; color: var(--muted); }
+label { display: grid; gap: .2rem; font-size: .86rem; color: var(--muted); }
+select, button {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 8px;
+  padding: .45rem .6rem;
+}
+.month-controls {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+}
+.calendar {
+  margin-top: .75rem;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+.day-name,
+.day-cell {
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: .45rem;
+}
+.day-name { background: #f8faff; font-weight: 600; font-size: .9rem; }
+.day-cell { min-height: 110px; font-size: .86rem; }
+.day-num { font-weight: 700; margin-bottom: .3rem; }
+.other-month { color: #9aa8c3; background: #fcfdff; }
+.day-jobs { display: grid; gap: .3rem; }
+.day-job {
+  border-radius: 6px;
+  padding: .3rem;
+  background: #f4f7ff;
+  border: 1px solid #d9e3ff;
+}
+.day-job small { display: block; color: var(--muted); }
+
+@media (max-width: 760px) {
+  .job-card { flex-direction: column; align-items: start; }
+}
